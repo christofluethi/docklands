@@ -1,0 +1,7 @@
+FROM debian
+
+RUN apt-get -qq update && apt-get -y install openjdk-8-jdk --no-install-recommends
+COPY target/app.jar /app
+
+CMD ["java", "-jar", "/app/app.jar"]
+
