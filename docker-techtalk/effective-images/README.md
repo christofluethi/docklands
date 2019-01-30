@@ -1,3 +1,6 @@
-# Spring Boot Hello World App
+# Effecive Image
 
-repo for docker techtalk demo
+Optimizes Dockerfile step by step (see numbered Dockerfiles).
+
+Size: From 700MB to 130MB Container
+Build: From >1m build to <1s
