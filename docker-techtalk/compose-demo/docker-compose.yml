@@ -1,7 +1,7 @@
 version: '3' 
 services:
   proxy:
-    image: nginx/1.15.8
+    image: nginx:1.15.8
     hostname: proxy
     networks:
       - composedemo
@@ -10,13 +10,13 @@ services:
     ports:
       - 8580:8080
 
-  greeter:
-    image: docker.shaped.ch/microprofile-greeter
-    hostname: greeter
+  site:
+    image: httpd:2.4.38
+    hostname: site
     networks:
       - composedemo
     ports:
-      - 8581:8080
+      - 8581:80
 
   systeminfo1:
     image: christofluethi/systeminfo:1.0.0
@@ -35,7 +35,7 @@ services:
       - 8583:8080
 
 networks:
-  mpdemo:
+  composedemo:
     driver: bridge
     ipam:
       driver: default
