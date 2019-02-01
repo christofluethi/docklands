@@ -11,25 +11,26 @@ if [ ! -z "$2" ]; then
     CPUS=$2
 fi
 
+PORT=8180
+
 for STAGE in jre8slim jre8slimflags jre9slim jre9slimflags jre10slim jre11slim
 do
     echo "#################################################"
     echo Stage ${STAGE} ${MEM} ${CPUS}
     echo "#################################################"
     docker build --target=${STAGE} . -t ${STAGE} > /dev/null
-    echo "docker run -d --name=${STAGE} --rm ${MEM} ${CPUS} ${STAGE}"
-    docker run -d --name=${STAGE} --rm ${MEM} ${CPUS} ${STAGE}
+    echo "docker run -d --name=${STAGE} --rm -p ${PORT}:8080 ${MEM} ${CPUS} ${STAGE}"
+    docker run -d --name=${STAGE} --rm -p ${PORT}:8080 ${MEM} ${CPUS} ${STAGE}
 
-    IP=$(docker inspect ${STAGE} --format '{{ .NetworkSettings.IPAddress }}')
     CMD=$(docker inspect ${STAGE} --format '{{ .Config.Cmd }}')
 
-    echo "Waiting for Endpoint ${IP}:8080 to become ready."
-    while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' ${IP}:8080)" != "200" ]]; do echo -n "." && sleep 1; done
+    echo "Waiting for Endpoint localhost:${PORT} to become ready."
+    while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' localhost:${PORT})" != "200" ]]; do echo -n "." && sleep 1; done
 
     echo
     echo "--"
     echo "Start CMD: $CMD"
-    curl -s -o - ${IP}:8080
+    curl -s -o - localhost:${PORT}
     echo "--"
 
 	while true; do
@@ -41,6 +42,7 @@ do
 		esac
 	done
 
+    PORT=$((PORT+1))
     #echo "Killing ${STAGE}"
     #docker kill ${STAGE}
 done
