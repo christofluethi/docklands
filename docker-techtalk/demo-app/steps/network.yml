@@ -1,0 +1,6 @@
+  NETWORK_NAME:
+    driver: NETWORK_DRIVER
+    ipam:
+      driver: default
+      config:
+      - subnet: 192.168.RANGE.0/24

@@ -1,0 +1,13 @@
+  SERVICENAME:
+    image: IMAGE
+    hostname: HOSTNAME
+	restart: "POLICY"
+    networks:
+    - NETWORK_NAME
+    environment:
+    - ENVIRONMENT
+    ports:
+    - HOST_PORT:CONTAINER_PORT
+    volumes:
+    - FROM:TO
+

@@ -1,0 +1,67 @@
+#
+# Demo Application
+# ----------------
+# * http://hostname:11000/app: LoadBalanced SystemInfo (Container 1 & 2)
+# * http://hostname:11000/node1: SystemInfo Container 1
+# * http://hostname:11000/node2: SystemInfo Container 2
+# * http://hostname:11000/: Static Website served with Apache HTTPD (Directory ./website)
+# * 
+# * node1 should be accessible directly as http://hostname:11001
+# * node1 should have 2GB Heap-Space
+# * simple /health health-check for load-balancer
+#
+# SystemInfo Container: christofluethi/systeminfo:1.0.0
+# Apache Httpd: httpd:2.4
+# NGiNX: nginx:1.15.8
+#
+version: '3' 
+services:
+  proxy:
+    image: nginx:1.15.8
+    hostname: proxy
+    restart: "no"
+    networks:
+    - demoapp
+    ports:
+    - 11000:8080
+    volumes:
+    - ./nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+    - systeminfo1
+    - systeminfo2
+    - website
+
+  systeminfo1:
+    image: christofluethi/systeminfo:1.0.0
+    hostname: systeminfo1
+    restart: "no"
+    networks:
+    - demoapp
+    environment:
+    - JAVA_OPTS=-Xmx2048m -Xms512m
+    ports:
+    - 11001:8080
+
+  systeminfo2:
+    image: christofluethi/systeminfo:1.0.0
+    hostname: systeminfo2
+    restart: "no"
+    networks:
+    - demoapp
+
+  website:
+    image: httpd:2.4
+    hostname: website
+    restart: "no"
+    networks:
+    - demoapp
+    volumes:
+    - ./website:/usr/local/apache2/htdocs
+
+networks:
+  demoapp:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 192.168.227.0/24
