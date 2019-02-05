@@ -1,0 +1,4 @@
+# https://github.com/nginxinc/docker-nginx-unprivileged
+# github: https://github.com/nginxinc/docker-nginx-unprivileged
+# set pid in nginx.conf: pid        /var/cache/nginx/nginx.pid;
+# image: nginxinc/nginx-unprivileged:1.15.8

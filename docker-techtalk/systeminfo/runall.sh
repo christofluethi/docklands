@@ -1,7 +1,7 @@
 #!/bin/bash
 
 MEM="--memory=1024m"
-CPUS="--cpus=6"
+CPUS="--cpus=2"
 
 if [ ! -z "$1" ]; then
     MEM=$1
