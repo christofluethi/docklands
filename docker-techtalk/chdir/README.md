@@ -1,6 +1,4 @@
-# Docker Layers
-
-Whats to output of the docker build process?
+# Whats to output of the docker build process?
 <details>
     <summary>Solution</summary>
 
@@ -10,7 +8,7 @@ Whats to output of the docker build process?
 
 
 
-How can you fix it this?
+# How can you fix it this?
 <details>
     <summary>Solution</summary>
 
