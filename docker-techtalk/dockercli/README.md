@@ -25,6 +25,11 @@ Inspect Image
 docker image inspect httpd
 ```
 
+History of image (How image was built)
+```
+docker history httpd
+```
+
 Remove Images
 ```
 docker rmi docker.io/christofluethi/systeminfo:1.0.0
@@ -36,6 +41,7 @@ Remove unused images (all with --all)
 ```
 docker image prune
 ```
+
 
 ## Container
 Show containers
@@ -62,6 +68,11 @@ Jump into container
 * You have to specify `CMD` (bash) to execute
 ```
 docker exec -it testweb bash
+```
+
+Show changes in actual container
+```
+docker diff testweb
 ```
 
 Inspect container
@@ -100,6 +111,7 @@ docker stop $(docker ps -q)
 ```
 
 
+
 ## Build Container
 Build Image from Dockerfile
 ```
@@ -134,6 +146,11 @@ docker system info
 Get Events
 ```
 docker system events --since 24h
+```
+
+Show docker disk space usage
+```
+docker system df
 ```
 
 Clean system
