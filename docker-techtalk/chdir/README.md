@@ -1,4 +1,16 @@
-# Whats to output of the docker build process?
+# Change dir
+
+Dockerfile
+```
+FROM alpine:latest
+
+RUN mkdir -p /some/directory
+RUN echo "test" > /some/directory/somefile
+RUN cd /some/directory/ 
+RUN cat somefile
+```
+
+## Whats to output of the docker build process?
 <details>
     <summary>Solution</summary>
 
@@ -8,7 +20,7 @@
 
 
 
-# How can you fix it this?
+## How can you fix it this?
 <details>
     <summary>Solution</summary>
 
@@ -33,4 +45,3 @@ WORKDIR /some/directory
 RUN cat somefile
 ```
 </details>
-
