@@ -2,16 +2,27 @@
 
 * Whats the base image?
 * Whats the working directory?
-* Whats the current user?
 * Whats the content of `added`?
 * Whats the content of `copied`?
 * Whats the value of `ENVIRONMENT`?
 * What about the data of `/anonvol` from `Dockerfile`?
 
+Create volume
+```
+docker volume create namedvol
+```
+
 Run Container with
+* For windows use windows command prompt for bind mounts and specify with `c:/<dir>/`...
 ```
 docker run --rm -it --name dftest -v namedvol:/namedvol -v `pwd`/bindvol:/bindvol christofluethi/demo-dockerfile:1.0.0
 ```
+
+The following Directories exist:
+* `/anonvol` docker anonymous volume (Specified in Dockerfile)
+* `/bindvol` docker bind mounted volume from docker host
+* `/namedvol` docker volume 
+* `/localvol` directory in container
 
 Add files to volumes
 ```
