@@ -1,6 +1,66 @@
 # Docker CLI
 
-## Image
+## Short
+
+Run container attached
+```
+docker run --rm --name testweb httpd
+```
+
+Run container detached
+```
+docker run --rm -d --name testweb httpd
+```
+
+Logs
+```
+docker logs testweb
+docker logs testweb --tail 100 -f
+```
+
+Logs
+```
+docker inspect testweb
+docker inspect testweb --format '{{ .NetworkSettings.IPAddress }}'
+```
+
+Enter detached container
+```
+docker exec -it testweb bash
+```
+
+Stop/Remove container
+```
+docker stop testweb
+docker rm testweb
+```
+
+Show/create/remove networks
+```
+docker network ls
+docker network create --subnet 192.168.x.0/24 testnet
+docker network rm testnet
+```
+
+Show volumes
+```
+docker volume ls
+docker volume create testvol
+docker volume rm testvol
+```
+
+Clean System
+```
+docker system df
+docker container prune
+docker image prune
+docker volume prune
+docker system prune
+```
+
+## Detailed
+
+### Image
 
 Search remote image (no support for tags no search in private repos)
 ```
@@ -43,7 +103,7 @@ docker image prune
 ```
 
 
-## Container
+### Container
 Show containers
 ```
 docker ps
@@ -112,7 +172,7 @@ docker stop $(docker ps -q)
 
 
 
-## Build Container
+### Build Container
 Build Image from Dockerfile
 ```
 docker build .
@@ -136,7 +196,7 @@ docker login docker.io
 ```
 
 
-## System
+### System
 Get system informations
 ```
 docker info

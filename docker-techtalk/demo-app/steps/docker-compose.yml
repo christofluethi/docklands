@@ -8,11 +8,10 @@
 # * 
 # * node1 should be accessible directly as http://hostname:11001
 # * node1 should have 2GB Heap-Space
-# * very simple /health health-check for load-balancer
 #
 # SystemInfo Container: christofluethi/systeminfo:1.0.0
 # Apache Httpd: httpd:2.4
-# NGiNX: nginx:1.15.8
+# nginx: nginx:1.15.8
 #
 version: '3' 
 services:
