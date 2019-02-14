@@ -1,7 +1,6 @@
   SERVICENAME:
     image: IMAGE
     hostname: HOSTNAME
-	restart: "POLICY"
     networks:
     - NETWORK_NAME
     environment:

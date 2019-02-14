@@ -31,6 +31,4 @@ EXPOSE 8082/udp
 
 ENV ENVIRONMENT=development
 
-USER 1000:1000
-
 CMD ["/bin/sh"]
