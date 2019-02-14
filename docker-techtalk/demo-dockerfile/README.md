@@ -15,7 +15,7 @@ docker volume create namedvol
 Run Container with
 * For windows use windows command prompt for bind mounts and specify with `c:/<dir>/`...
 ```
-docker run --rm -it --name dftest -v namedvol:/namedvol -v `pwd`/bindvol:/bindvol christofluethi/demo-dockerfile:1.0.0
+docker run --rm -it --name dfile -v namedvol:/namedvol -v `pwd`/bindvol:/bindvol demodockerfile
 ```
 
 The following Directories exist:
@@ -41,5 +41,5 @@ Which files/volumes survive a rebuild?
 
 Does the following startup change the persistence in any way?
 ```
-docker run --rm -it --name dftest -v namedvol:/namedvol -v `pwd`/bindvol:/bindvol -v anonvol:/anonvol christofluethi/demo-dockerfile:1.0.0
+docker run --rm -it --name dfile -v namedvol:/namedvol -v `pwd`/bindvol:/bindvol -v anonvol:/anonvol demodockerfile
 ```
