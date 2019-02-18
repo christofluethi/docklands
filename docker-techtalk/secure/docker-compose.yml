@@ -3,13 +3,12 @@
 # * http://hostname:11000/app: LoadBalanced SystemInfo (Container 1 & 2)
 # * http://hostname:11000/node1: SystemInfo Container 1
 # * http://hostname:11000/node2: SystemInfo Container 2
+# * http://hostname:11000/: LoadBalanced Apache HTTPD (Directory ./website)
 # * http://hostname:11000/site1: Apache HTTPD Container 1
 # * http://hostname:11000/site2: Apache HTTPD Container 2
-# * http://hostname:11000/: LoadBalanced Apache HTTPD (Directory ./website)
 # *
 # * node1 should be accessible directly as http://hostname:11001
 # * node1 should have 2GB Heap-Space
-# * simple /health health-check for load-balancer
 #
 # SystemInfo Container: christofluethi/systeminfo:1.0.0
 # Apache Httpd: httpd:2.4
