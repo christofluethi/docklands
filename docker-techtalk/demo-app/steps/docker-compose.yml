@@ -1,0 +1,22 @@
+#
+# Demo Application
+# ----------------
+# * http://hostname:11000/app: LoadBalanced SystemInfo (Container 1 & 2)
+# * http://hostname:11000/node1: SystemInfo Container 1
+# * http://hostname:11000/node2: SystemInfo Container 2
+# * http://hostname:11000/: Static Website served with Apache HTTPD (Directory ./website)
+# * 
+# * node1 should be accessible directly as http://hostname:11001
+# * node1 should have 2GB Heap-Space
+#
+# SystemInfo Container: christofluethi/systeminfo:1.0.0
+# Apache Httpd: httpd:2.4
+# nginx: nginx:1.15.8
+#
+version: '3' 
+services:
+
+volumes:
+
+networks:
+
