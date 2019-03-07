@@ -6,12 +6,14 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.management.JMException;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
+import javax.servlet.http.HttpServletRequest;
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.StringTokenizer;
 import java.util.stream.Collectors;
 
 @RestController
@@ -35,7 +37,7 @@ public class SystemInfo {
 	}
 
 	@RequestMapping(value = "/", produces = { "text/plain"})
-	String info() throws JMException, UnknownHostException {
+	String info(HttpServletRequest request) throws JMException, UnknownHostException {
 		ArrayList<SystemInfoEntry> entries = new ArrayList<>();
 
 		Runtime runtime = Runtime.getRuntime();
@@ -46,6 +48,9 @@ public class SystemInfo {
 		String javaVersion = System.getProperty("java.version");
 		String osName = System.getProperty("os.name");
 		String osVersion = System.getProperty("os.version");
+
+		String userAgent = request.getHeader("User-Agent");
+		String clientIp = getClientIpAddress(request);
 
 		InetAddress address = InetAddress.getLocalHost();
 		String ip = address.getHostAddress();
@@ -58,6 +63,8 @@ public class SystemInfo {
 		MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
 		Object totalPhysicalMemory = mBeanServer.getAttribute(new ObjectName("java.lang","type","OperatingSystem"), "TotalPhysicalMemorySize");
 
+		entries.add(new SystemInfoEntry(SystemInfoEntry.Source.REQ, SystemInfoEntry.Target.CLIENT, SystemInfoEntry.ValueType.STRING, userAgent, "User-Agent"));
+		entries.add(new SystemInfoEntry(SystemInfoEntry.Source.REQ, SystemInfoEntry.Target.CLIENT, SystemInfoEntry.ValueType.STRING_LIMITED, clientIp, "Client-IP"));
 		entries.add(new SystemInfoEntry(SystemInfoEntry.Source.JAVA, SystemInfoEntry.Target.SYSTEM, SystemInfoEntry.ValueType.STRING_LIMITED, ip, "IP"));
 		entries.add(new SystemInfoEntry(SystemInfoEntry.Source.JAVA, SystemInfoEntry.Target.SYSTEM, SystemInfoEntry.ValueType.STRING_LIMITED, hostname, "Hostname"));
 		entries.add(new SystemInfoEntry(SystemInfoEntry.Source.JAVA, SystemInfoEntry.Target.SYSTEM, SystemInfoEntry.ValueType.STRING_BYTES, totalPhysicalMemory.toString(), "Physical memory"));
@@ -77,6 +84,18 @@ public class SystemInfo {
 		entries.add(new SystemInfoEntry(SystemInfoEntry.Source.ENV, SystemInfoEntry.Target.JVM, SystemInfoEntry.ValueType.STRING, System.getenv("JAVA_OPTS"), "JAVA_OPTS"));
 
 		return buildString(entries);
+	}
+
+	public static String getClientIpAddress(HttpServletRequest request) {
+		String xForwardedForHeader = request.getHeader("X-Forwarded-For");
+		if (xForwardedForHeader == null) {
+			return request.getRemoteAddr();
+		} else {
+			// As of https://en.wikipedia.org/wiki/X-Forwarded-For
+			// The general format of the field is: X-Forwarded-For: client, proxy1, proxy2 ...
+			// we only want the client
+			return new StringTokenizer(xForwardedForHeader, ",").nextToken().trim();
+		}
 	}
 
 	public static void main(String[] args) throws Exception {

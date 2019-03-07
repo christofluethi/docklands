@@ -1,7 +1,7 @@
 public class SystemInfoEntry {
 
-    public enum Source { JAVA, ENV, SYSTEM };
-    public enum Target { JVM, SYSTEM };
+    public enum Source { JAVA, ENV, SYSTEM, REQ };
+    public enum Target { JVM, SYSTEM, CLIENT };
     public enum ValueType { LONG_BYTES, STRING_BYTES, STRING_LIMITED, STRING, INT, SEPARATOR }
 
     private Source source;
