@@ -1,0 +1,163 @@
+apiVersion: template.openshift.io/v1
+kind: Template
+labels:
+  template: postgresql-multiuser-persistent-template
+message: |-
+  The following service(s) have been created in your project: ${DATABASE_SERVICE_NAME}.
+
+  Username: ${POSTGRESQL_USER1_USERNAME}
+  Password: ${POSTGRESQL_USER1_PASSWORD}
+  Schema: ${POSTGRESQL_USER1_USERNAME} 
+  Connection URL: postgresql://${DATABASE_SERVICE_NAME}:5432/
+
+  For more information about using this template, including OpenShift considerations, see https://github.com/christofluethi/docklands/openshift/postgresql.
+metadata:
+  annotations:
+    description: |-
+      PostgreSQL database service, with persistent storage and support for creation of multiple users. For more information about using this template, see https://github.com/christofluethi/docklands/openshift/postgresql/.
+
+      NOTE: Scaling to more than one replica is not supported. You must have persistent volumes available in your cluster to use this template.
+    iconClass: icon-postgresql
+    openshift.io/display-name: Multiuser PostgreSQL
+    openshift.io/documentation-url: https://docs.openshift.org/latest/using_images/db_images/postgresql.html
+    openshift.io/long-description: This template provides a standalone PostgreSQL
+      server with support for creation of multiple users user POSTGRESQL_USER*_USERNAME env variables.  The database is stored on persistent storage.  The
+      username, and password are chosen via parameters when provisioning this service.
+    openshift.io/provider-display-name: shaped.ch
+    openshift.io/support-url: https://www.shaped.ch
+    tags: database,postgresql
+  creationTimestamp: null
+  name: postgresql-persistent
+objects:
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      template.openshift.io/expose-uri: postgres://{.spec.clusterIP}:{.spec.ports[?(.name=="postgresql")].port}
+    name: ${DATABASE_SERVICE_NAME}
+  spec:
+    ports:
+    - name: postgresql
+      nodePort: 0
+      port: 5432
+      protocol: TCP
+      targetPort: 5432
+    selector:
+      name: ${DATABASE_SERVICE_NAME}
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: PersistentVolumeClaim
+  metadata:
+    name: ${DATABASE_SERVICE_NAME}
+  spec:
+    accessModes:
+    - ReadWriteOnce
+    resources:
+      requests:
+        storage: ${VOLUME_CAPACITY}
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    annotations:
+      template.alpha.openshift.io/wait-for-ready: "true"
+    name: ${DATABASE_SERVICE_NAME}
+  spec:
+    replicas: 1
+    selector:
+      name: ${DATABASE_SERVICE_NAME}
+    strategy:
+      type: Recreate
+    template:
+      metadata:
+        labels:
+          name: ${DATABASE_SERVICE_NAME}
+      spec:
+        containers:
+        - capabilities: {}
+          env:
+          - name: POSTGRESQL_ADMIN_PASSWORD
+            value: ${POSTGRESQL_ADMIN_PASSWORD}
+          - name: POSTGRESQL_USER1_USERNAME
+            value: ${POSTGRESQL_USER1_USERNAME}
+          - name: POSTGRESQL_USER1_PASSWORD
+            value: ${POSTGRESQL_USER1_PASSWORD}
+          image: ${POSTGRESQL_IMAGE}
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            exec:
+              command:
+              - /usr/libexec/check-container
+              - --live
+            initialDelaySeconds: 120
+            timeoutSeconds: 10
+          name: postgresql
+          ports:
+          - containerPort: 5432
+            protocol: TCP
+          readinessProbe:
+            exec:
+              command:
+              - /usr/libexec/check-container
+            initialDelaySeconds: 5
+            timeoutSeconds: 1
+          resources:
+            limits:
+              memory: ${MEMORY_LIMIT}
+          securityContext:
+            capabilities: {}
+            privileged: false
+          terminationMessagePath: /dev/termination-log
+          volumeMounts:
+          - mountPath: /var/lib/pgsql/data
+            name: ${DATABASE_SERVICE_NAME}-data
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        volumes:
+        - name: ${DATABASE_SERVICE_NAME}-data
+          persistentVolumeClaim:
+            claimName: ${DATABASE_SERVICE_NAME}
+    triggers:
+    - type: ConfigChange
+  status: {}
+parameters:
+- description: Maximum amount of memory the container can use.
+  displayName: Memory Limit
+  name: MEMORY_LIMIT
+  required: true
+  value: 512Mi
+- description: The name of the OpenShift Service exposed for the database.
+  displayName: Database Service Name
+  name: DATABASE_SERVICE_NAME
+  required: true
+  value: db
+- description: Image of PostgreSQL to be used
+  displayName: PostgreSQL Image
+  name: POSTGRESQL_IMAGE
+  required: true
+  value: "docker.io/christofluethi/postgresql:10-centos7"
+- description: Volume space available for data, e.g. 512Mi, 2Gi.
+  displayName: Volume Capacity
+  name: VOLUME_CAPACITY
+  required: true
+  value: 3Gi
+- description: Password for the PostgreSQL ADMIN connection user.
+  displayName: PostgreSQL Connection ADMIN Password
+  from: '[a-zA-Z0-9]{16}'
+  generate: expression
+  name: POSTGRESQL_ADMIN_PASSWORD
+  required: true
+- description: Username1 for PostgreSQL user that will be used for accessing the database.
+  displayName: PostgreSQL Connection Username
+  from: user[A-Z0-9]{3}
+  generate: expression
+  name: POSTGRESQL_USER1_USERNAME
+  required: true
+- description: Password for the PostgreSQL connection user.
+  displayName: PostgreSQL Connection Password
+  from: '[a-zA-Z0-9]{16}'
+  generate: expression
+  name: POSTGRESQL_USER1_PASSWORD
+  required: true
