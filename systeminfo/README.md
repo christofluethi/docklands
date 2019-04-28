@@ -1,6 +1,14 @@
 # System Info
 
-Simple container to print system and jvm data to test use with docker.
+A simple debug container to print system, jvm and client information. Supports various debug features as 
+* Force system exit with errorcode 85 (/die)
+* Ram consumptions (/memory)
+* Readiness check (/ready)
+* Liveness check (/live)
+* Control readiness and liveness (/set/unhealthy, /set/failing, /clear/unhealthy, /clear/failing)
+
+
+## Sample output 
 
 ```
 REQ    CLIENT       User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.81 Safari/537.36
