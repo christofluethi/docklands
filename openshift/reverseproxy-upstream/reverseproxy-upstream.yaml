@@ -1,0 +1,230 @@
+apiVersion: template.openshift.io/v1
+kind: Template
+metadata:
+  annotations:
+    description: ReverseProxy with specific upstream backend
+    openshift.io/display-name: Creates a specific service loadbalanced with nginx reverseproxy
+    openshift.io/provider-display-name: shaped.ch
+    openshift.io/support-url: https://www.shaped.ch
+    tags: reverseproxy
+  name: reverseproxy-upstream
+objects:
+# ----------------------
+# Service NGINX
+# ----------------------
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      description: The nginx server's port.
+    labels:
+      application: nginx
+    name: nginx
+  spec:
+    ports:
+    - port: 8080
+      targetPort: 8080
+    selector:
+      deploymentConfig: nginx
+# ----------------------
+# Service Upstream
+# ----------------------
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      description: The application server's port.
+    labels:
+      application: ${APPLICATION_NAME}
+    name: ${APPLICATION_NAME}
+  spec:
+    ports:
+    - port: "${{UPSTREAM_PORT}}"
+      targetPort: "${{UPSTREAM_PORT}}"
+    selector:
+      deploymentConfig: ${APPLICATION_NAME}
+# ----------------------
+# Route
+# ----------------------
+- apiVersion: v1
+  id: nginx-http
+  kind: Route
+  metadata:
+    annotations:
+      description: Route for the reverse proxy's http service.
+    labels:
+      application: nginx
+    name: nginx
+  spec:
+    to:
+      name: nginx
+# ----------------------
+# DeploymentConfig NGINX
+# ----------------------
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    labels:
+      application: nginx
+    name: nginx
+  spec:
+    replicas: 2
+    selector:
+      deploymentConfig: nginx
+    strategy:
+      type: Recreate
+    template:
+      metadata:
+        labels:
+          application: nginx
+          deploymentConfig: nginx
+        name: nginx
+      spec:
+        containers:
+          - env:
+            - name: TEST
+              value: A
+            image: ${NGINX_IMAGE}
+            name: nginx
+            ports:
+              - containerPort: 8080
+                protocol: TCP
+            resources: {}
+            securityContext:
+              privileged: false
+            volumeMounts:
+              - name: nginx-config
+                mountPath: /etc/nginx/nginx.conf
+                subPath: nginx.conf
+        volumes:
+          - name: nginx-config
+            configMap:
+              name: nginx-config
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+    triggers:
+      - type: ConfigChange
+# ----------------------
+# DeploymentConfig Upstream
+# ----------------------
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    labels:
+      application: ${APPLICATION_NAME}
+    name: ${APPLICATION_NAME}
+  spec:
+    replicas: 2
+    selector:
+      deploymentConfig: ${APPLICATION_NAME}
+    strategy:
+      type: Recreate
+    template:
+      metadata:
+        labels:
+          application: ${APPLICATION_NAME}
+          deploymentConfig: ${APPLICATION_NAME}
+        name: ${APPLICATION_NAME}
+      spec:
+        containers:
+          - env:
+            - name: TEST
+              value: A
+            image: ${UPSTREAM_IMAGE}
+            name: ${APPLICATION_NAME}
+            ports:
+              - containerPort: "${{UPSTREAM_PORT}}"
+                protocol: TCP
+            resources: {}
+            securityContext:
+              privileged: false
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+    triggers:
+      - type: ConfigChange
+# ----------------------
+# ConfigMap NGINX
+# ----------------------
+- apiVersion: v1
+  kind: ConfigMap
+  metadata:
+    name: nginx-config
+  data: 
+    nginx.conf: |-
+      worker_processes auto;
+      error_log  /var/log/nginx/error.log warn;
+      pid /var/cache/nginx/nginx.pid;
+      events { worker_connections 1024; }
+      http {
+        proxy_temp_path /var/cache/nginx/proxy_temp;
+        client_body_temp_path /var/cache/nginx/client_temp;
+        fastcgi_temp_path /var/cache/nginx/fastcgi_temp;
+        uwsgi_temp_path /var/cache/nginx/uwsgi_temp;
+        scgi_temp_path /var/cache/nginx/scgi_temp;
+        
+        include /etc/nginx/mime.types;
+        default_type text/plain;
+        
+        log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+                          '$status $body_bytes_sent "$http_referer" '
+                          '"$http_user_agent" "$http_x_forwarded_for"';
+        
+        access_log  /var/log/nginx/access.log  main;
+        
+        sendfile on;
+        keepalive_timeout 65;
+        
+        upstream app {
+          server ${APPLICATION_NAME}:${UPSTREAM_PORT};
+        }
+        
+        server {
+          listen 8080 default_server;
+          server_name _;
+        
+          location /health {
+            access_log off;
+            return 200 "ok\n";
+          }
+        
+          location /${APPLICATION_PATH} {
+            proxy_pass http://app/;
+          }
+        }
+      }
+# ----------------------
+# Parameters
+# ----------------------
+parameters:
+- description: The name for the application.
+  displayName: Application Name
+  name: APPLICATION_NAME
+  required: true
+  value: systeminfo
+- description: Context Path
+  displayName: Application Context Path
+  name: APPLICATION_PATH
+  required: true
+  value: "app"
+- description: Container image of nginx ReverseProxy to be used
+  displayName: Nginx container image
+  name: NGINX_IMAGE
+  required: true
+  value: nginxinc/nginx-unprivileged
+- description: Upstream service image
+  displayName: Upstream image
+  name: UPSTREAM_IMAGE
+  required: true
+  value: docker.io/christofluethi/systeminfo:latest
+- description: Upstream service port
+  displayName: Upstream Port
+  name: UPSTREAM_PORT
+  required: true
+  value: "8080"
+

@@ -7,6 +7,9 @@ import javax.management.JMException;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.File;
+import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
 import java.net.InetAddress;
@@ -20,8 +23,16 @@ import java.util.stream.Collectors;
 @EnableAutoConfiguration
 public class SystemInfo {
 
+	public static final String READINESS_CHECK_FILE = "/tmp/unhealthy";
+	public static final String LIVENESS_CHECK_FILE = "/tmp/failing";
+
 	@RequestMapping(value = "/die", produces = { "text/plain"})
-	String die() throws JMException, UnknownHostException {
+	void die() {
+		System.exit(85);
+	}
+
+	@RequestMapping(value = "/memory", produces = { "text/plain"})
+	String memory() {
 		List<byte[]> mem = new ArrayList<>();
 		int iteration = 0;
 		Runtime rt = Runtime.getRuntime();
@@ -34,6 +45,69 @@ public class SystemInfo {
 				System.out.print("Free Memory (iteration: "+iteration+"): " + new SystemInfoEntry(SystemInfoEntry.Source.JAVA, SystemInfoEntry.Target.JVM, SystemInfoEntry.ValueType.LONG_BYTES, rt.freeMemory(), "Free Heap"));
 			}
 		}
+	}
+
+	@RequestMapping(value = "/ready", produces = { "text/plain"})
+	String ready(HttpServletResponse response) {
+		String rval = "readiness: im ok";
+		response.setStatus(200);
+		if(!isReady()) {
+			response.setStatus(500);
+			rval = "readiness: unhealthy";
+		}
+
+		return rval;
+	}
+
+	@RequestMapping(value = "/live", produces = { "text/plain"})
+	String live(HttpServletResponse response) {
+		String rval = "liveness: im ok";
+		response.setStatus(200);
+		if(!isAlive()) {
+			response.setStatus(500);
+			rval = "liveness: failing";
+		}
+
+		return rval;
+	}
+
+	@RequestMapping(value = "/set/unhealthy", produces = { "text/plain"})
+	String setUnhealthy() throws IOException {
+		File f = new File(READINESS_CHECK_FILE);
+		f.createNewFile();
+
+		return "readiness: unhealthy";
+	}
+
+	@RequestMapping(value = "/clear/unhealthy", produces = { "text/plain"})
+	String setHealthy() {
+		File f = new File(READINESS_CHECK_FILE);
+		if(f.exists()) {
+			f.delete();
+		}
+
+		return "readiness: healthy";
+	}
+
+	@RequestMapping(value = "/set/failing", produces = { "text/plain"})
+	String setFailing() throws IOException {
+		File fHealth = new File(READINESS_CHECK_FILE);
+		fHealth.createNewFile();
+
+		File fFailing = new File(LIVENESS_CHECK_FILE);
+		fFailing.createNewFile();
+
+		return "liveness: failing";
+	}
+
+	@RequestMapping(value = "/clear/failing", produces = { "text/plain"})
+	String setLive() {
+		File f = new File(LIVENESS_CHECK_FILE);
+		if(f.exists()) {
+			f.delete();
+		}
+
+		return "liveness: alive";
 	}
 
 	@RequestMapping(value = "/", produces = { "text/plain"})
@@ -82,6 +156,8 @@ public class SystemInfo {
 		entries.add(new SystemInfoEntry(SystemInfoEntry.Source.JAVA, SystemInfoEntry.Target.JVM, SystemInfoEntry.ValueType.STRING, mxBean.getVmVersion(), "VM Version"));
 		entries.add(new SystemInfoEntry(SystemInfoEntry.Source.JAVA, SystemInfoEntry.Target.JVM, SystemInfoEntry.ValueType.STRING, jvmArgs, "JVM Args"));
 		entries.add(new SystemInfoEntry(SystemInfoEntry.Source.ENV, SystemInfoEntry.Target.JVM, SystemInfoEntry.ValueType.STRING, System.getenv("JAVA_OPTS"), "JAVA_OPTS"));
+		entries.add(new SystemInfoEntry(SystemInfoEntry.Source.APP, SystemInfoEntry.Target.APP, SystemInfoEntry.ValueType.STRING, isReady(), "Is ready (/ready)"));
+		entries.add(new SystemInfoEntry(SystemInfoEntry.Source.APP, SystemInfoEntry.Target.APP, SystemInfoEntry.ValueType.STRING, isAlive(), "Is alive (/live)"));
 
 		return buildString(entries);
 	}
@@ -104,5 +180,15 @@ public class SystemInfo {
 
 	private String buildString(ArrayList<SystemInfoEntry> entries) {
 		return entries.stream().map(SystemInfoEntry::toString).collect(Collectors.joining());
+	}
+
+	private boolean isReady() {
+		File f = new File(READINESS_CHECK_FILE);
+		return !f.exists();
+	}
+
+	private boolean isAlive() {
+		File f = new File(LIVENESS_CHECK_FILE);
+		return !f.exists();
 	}
 }
