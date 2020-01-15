@@ -8,6 +8,7 @@ A simple debug container to print system, jvm and client information. Supports v
 * Control readiness and liveness (/set/unhealthy, /set/failing, /clear/unhealthy, /clear/failing)
 
 
+
 ## Sample output 
 
 ```
